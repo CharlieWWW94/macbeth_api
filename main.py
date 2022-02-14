@@ -24,9 +24,30 @@ class Quotation(db.Model):
 
 db.create_all()
 
+
 @app.route("/")
 def home():
     return render_template("index.html")
+
+
+# add quotations to db...
+@app.route("/add", methods=["GET", "POST"])
+def add_quotation():
+    new_id = len(Quotation.query.all()) + 1
+
+    new_quotation = Quotation(id=new_id,
+                              act=int(request.form.get("act")),
+                              scene=int(request.form.get("scene")),
+                              character=request.form.get("character"),
+                              quotation=request.form.get("quotation"),
+                              theme_1=request.form.get("theme_1"),
+                              theme_2=request.form.get("theme_2"),
+                              theme_3=request.form.get("theme_3"),
+                              )
+
+    db.session.add(new_quotation)
+    db.session.commit()
+    return jsonify({"response": {"success": "Successfully added new quotation"}})
 
 
 if __name__ == "__main__":
