@@ -21,6 +21,14 @@ class Quotation(db.Model):
     theme_2 = db.Column(db.String(100), nullable=True)
     theme_3 = db.Column(db.String(100), nullable=True)
 
+    def to_dict(self):
+        entry_dict = {}
+
+        for column in self.__table__.columns:
+            entry_dict[column.name] = getattr(self, column.name)
+
+        return entry_dict
+
 
 db.create_all()
 
@@ -48,6 +56,55 @@ def add_quotation():
     db.session.add(new_quotation)
     db.session.commit()
     return jsonify({"response": {"success": "Successfully added new quotation"}})
+
+
+# Get all quotations...
+
+@app.route("/all", methods=["GET"])
+def all_quotations():
+    all_quotations_dict = {"quotations": []}
+
+    for entry in Quotation.query.all():
+        print(entry.to_dict())
+        all_quotations_dict["quotations"].append(entry.to_dict())
+
+    return jsonify(all_quotations_dict)
+
+
+@app.route("/search", methods=["GET"])
+def search():
+    request_arguments = []
+    every_quotation = []
+    quotations_to_return = []
+
+    for entry in request.args:
+        request_arguments.append(entry)
+
+    if 'act' in request_arguments:
+        for entry in Quotation.query.filter_by(act=request.args['act']).all():
+            every_quotation.append(entry)
+
+    if 'scene' in request_arguments:
+        for entry in Quotation.query.filter_by(scene=request.args['scene']).all():
+            every_quotation.append(entry)
+
+    if 'character' in request_arguments:
+        for entry in Quotation.query.filter_by(character=request.args['character']).all():
+            every_quotation.append(entry)
+
+    if 'theme' in request_arguments:
+        for entry in Quotation.query.filter_by(theme_1=request.args['theme']).all():
+            every_quotation.append(entry)
+        for entry in Quotation.query.filter_by(theme_2=request.args['theme']).all():
+            every_quotation.append(entry)
+        for entry in Quotation.query.filter_by(theme_3=request.args['theme']).all():
+            every_quotation.append(entry)
+
+    for entry in every_quotation:
+        if entry not in quotations_to_return and every_quotation.count(entry) == len(request_arguments):
+            quotations_to_return.append(entry)
+
+    return jsonify({'quotations': [entry.to_dict() for entry in quotations_to_return]})
 
 
 if __name__ == "__main__":
