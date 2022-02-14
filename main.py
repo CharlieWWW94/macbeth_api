@@ -21,6 +21,14 @@ class Quotation(db.Model):
     theme_2 = db.Column(db.String(100), nullable=True)
     theme_3 = db.Column(db.String(100), nullable=True)
 
+    def to_dict(self):
+        entry_dict = {}
+
+        for column in self.__table__.columns:
+            entry_dict[column.name] = getattr(self, column.name)
+
+        return entry_dict
+
 
 db.create_all()
 
@@ -48,6 +56,68 @@ def add_quotation():
     db.session.add(new_quotation)
     db.session.commit()
     return jsonify({"response": {"success": "Successfully added new quotation"}})
+
+
+# Get all quotations...
+
+@app.route("/all", methods=["GET"])
+def all_quotations():
+    all_quotations_dict = {"quotations": []}
+
+    for entry in Quotation.query.all():
+        print(entry.to_dict())
+        all_quotations_dict["quotations"].append(entry.to_dict())
+
+    return jsonify(all_quotations_dict)
+
+
+@app.route("/search", methods=["GET"])
+def search():
+    list_of_quotations = []
+    request_arguments = []
+
+    for entry in request.args:
+        request_arguments.append(entry)
+
+    if 'scene' in request_arguments:
+        if 'act' not in request_arguments:
+            return jsonify({'Error': 'If searching by scene you must specify an act.'})
+        else:
+            if len(request_arguments) == 2:
+                return jsonify({'quotations': [quotation.to_dict() for quotation in Quotation.query.filter_by(
+                    act=request.args['act'],
+                    scene=request.args['scene']).all()]}
+                               )
+            elif len(request_arguments) > 2:
+                if 'character' in request_arguments:
+                    character_quotations = [quotation for quotation in Quotation.query.filter_by(
+                        act=request.args['act'],
+                        scene=request.args['scene'],
+                        character=request.args['character']).all()]
+
+                    for entry in character_quotations:
+                        list_of_quotations.append(entry)
+
+                    if 'theme' not in request_arguments:
+                        return jsonify({'quotations': [quotation.to_dict() for quotation in list_of_quotations]})
+                    else:
+                        for entry in list_of_quotations:
+                            if entry.theme_1 != request.args['theme'] and entry.theme_2 != request.args['theme'] and entry.theme_3 != request.args['theme']:
+                                list_of_quotations.remove(entry)
+
+                        return jsonify({'quotations': [quotation.to_dict() for quotation in list_of_quotations]})
+
+                else:
+                    #and if you get a theme... we need to add to the list_of_quotations throughout this process.
+                    pass
+
+
+
+
+
+    print(request_arguments)
+
+    return jsonify({'hello!': 'You seem to have got through. Well done.'})
 
 
 if __name__ == "__main__":
