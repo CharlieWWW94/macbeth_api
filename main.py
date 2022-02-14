@@ -102,20 +102,15 @@ def search():
                         return jsonify({'quotations': [quotation.to_dict() for quotation in list_of_quotations]})
                     else:
                         for entry in list_of_quotations:
-                            if entry.theme_1 != request.args['theme'] and entry.theme_2 != request.args['theme'] and entry.theme_3 != request.args['theme']:
+                            if request.args['theme'] != entry.theme_1 and entry.theme_2 != request.args[
+                                'theme'] and entry.theme_3 != request.args['theme']:
                                 list_of_quotations.remove(entry)
 
                         return jsonify({'quotations': [quotation.to_dict() for quotation in list_of_quotations]})
 
                 else:
-                    #and if you get a theme... we need to add to the list_of_quotations throughout this process.
+                    # and if you get a theme... we need to add to the list_of_quotations throughout this process.
                     pass
-
-
-
-
-
-    print(request_arguments)
 
     return jsonify({'hello!': 'You seem to have got through. Well done.'})
 
