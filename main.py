@@ -85,6 +85,8 @@ def search():
             every_quotation.append(entry)
 
     if 'scene' in request_arguments:
+        if 'act' not in request_arguments:
+            return jsonify({'Error': 'If searching by scene you must enter an act.'})
         for entry in Quotation.query.filter_by(scene=request.args['scene']).all():
             every_quotation.append(entry)
 
