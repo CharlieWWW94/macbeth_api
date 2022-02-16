@@ -81,33 +81,46 @@ def search():
         request_arguments.append(entry)
 
     if 'act' in request_arguments:
-        for entry in Quotation.query.filter_by(act=request.args['act']).all():
-            every_quotation.append(entry)
+        if request.args['act'] == 'All':
+            request_arguments.remove('act')
+        else:
+            for entry in Quotation.query.filter_by(act=request.args['act']).all():
+                every_quotation.append(entry)
 
     if 'scene' in request_arguments:
-        if 'act' not in request_arguments:
-            return jsonify({'Error': 'If searching by scene you must enter an act.'})
-        for entry in Quotation.query.filter_by(scene=request.args['scene']).all():
-            every_quotation.append(entry)
+        if request.args['scene'] == 'All':
+            request_arguments.remove('scene')
+        else:
+            for entry in Quotation.query.filter_by(scene=request.args['scene']).all():
+                every_quotation.append(entry)
 
     if 'character' in request_arguments:
-        for entry in Quotation.query.filter_by(character=request.args['character']).all():
-            every_quotation.append(entry)
+        if request.args['character'] == 'All':
+            request_arguments.remove('character')
+        else:
+            for entry in Quotation.query.filter_by(character=request.args['character']).all():
+                every_quotation.append(entry)
 
     if 'theme' in request_arguments:
-        for entry in Quotation.query.filter_by(theme_1=request.args['theme']).all():
-            every_quotation.append(entry)
-        for entry in Quotation.query.filter_by(theme_2=request.args['theme']).all():
-            every_quotation.append(entry)
-        for entry in Quotation.query.filter_by(theme_3=request.args['theme']).all():
-            every_quotation.append(entry)
+        if request.args['theme'] == 'All':
+            request_arguments.remove('theme')
+        else:
+            for entry in Quotation.query.filter_by(theme_1=request.args['theme']).all():
+                every_quotation.append(entry)
+            for entry in Quotation.query.filter_by(theme_2=request.args['theme']).all():
+                every_quotation.append(entry)
+            for entry in Quotation.query.filter_by(theme_3=request.args['theme']).all():
+                every_quotation.append(entry)
 
-    for entry in every_quotation:
-        if entry not in quotations_to_return and every_quotation.count(entry) == len(request_arguments):
-            quotations_to_return.append(entry)
+    if len(every_quotation) > 0:
+        for entry in every_quotation:
+            if entry not in quotations_to_return and every_quotation.count(entry) == len(request_arguments):
+                quotations_to_return.append(entry)
+    else:
+        return jsonify({'quotations': [entry.to_dict() for entry in Quotation.query.all()]})
 
     return jsonify({'quotations': [entry.to_dict() for entry in quotations_to_return]})
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True, host='127.0.0.1', port=5001)
