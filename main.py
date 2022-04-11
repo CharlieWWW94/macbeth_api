@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, render_template, request
 from flask_sqlalchemy import SQLAlchemy
-import ast
+import os
 
 app = Flask(__name__)
 
@@ -43,20 +43,20 @@ def home():
 @app.route("/add", methods=["GET", "POST"])
 def add_quotation():
     new_id = len(Quotation.query.all()) + 1
+    if request.headers['key'] == os.getenv("KEY"):
+        new_quotation = Quotation(id=new_id,
+                                  act=int(request.form.get("act")),
+                                  scene=int(request.form.get("scene")),
+                                  character=request.form.get("character"),
+                                  quotation=request.form.get("quotation"),
+                                  theme_1=request.form.get("theme_1"),
+                                  theme_2=request.form.get("theme_2"),
+                                  theme_3=request.form.get("theme_3"),
+                                  )
 
-    new_quotation = Quotation(id=new_id,
-                              act=int(request.form.get("act")),
-                              scene=int(request.form.get("scene")),
-                              character=request.form.get("character"),
-                              quotation=request.form.get("quotation"),
-                              theme_1=request.form.get("theme_1"),
-                              theme_2=request.form.get("theme_2"),
-                              theme_3=request.form.get("theme_3"),
-                              )
-
-    db.session.add(new_quotation)
-    db.session.commit()
-    return jsonify({"response": {"success": "Successfully added new quotation"}})
+        db.session.add(new_quotation)
+        db.session.commit()
+        return jsonify({"response": {"success": "Successfully added new quotation"}})
 
 
 # Get all quotations...
@@ -64,50 +64,49 @@ def add_quotation():
 @app.route("/all", methods=["GET"])
 def all_quotations():
     all_quotations_dict = {"quotations": []}
+    if request.headers['key'] == os.getenv("KEY"):
+        for entry in Quotation.query.all():
+            all_quotations_dict["quotations"].append(entry.to_dict())
 
-    for entry in Quotation.query.all():
-        print(entry.to_dict())
-        all_quotations_dict["quotations"].append(entry.to_dict())
-
-    return jsonify(all_quotations_dict)
+        return jsonify(all_quotations_dict)
 
 
 @app.route("/search", methods=["GET"])
 def search():
     every_quotation = []
     quotations_to_return = []
+    if request.headers['key'] == os.getenv("KEY"):
+        requests_as_dict = request.args.to_dict()
+        theme = []
+        request_dict_keys = [key for key in requests_as_dict.keys()]
 
-    requests_as_dict = request.args.to_dict()
-    theme = []
-    request_dict_keys = [key for key in requests_as_dict.keys()]
-
-    if 'id' in request_dict_keys:
-        id_list = request.args.getlist('id')
-        for given_id in id_list:
-            quotations_to_return.append(Quotation.query.filter_by(id=given_id).first().to_dict())
-        return jsonify({'quotations': quotations_to_return})
-
-    else:
-
-        for key in request_dict_keys:
-            if requests_as_dict[key] == 'All':
-                del requests_as_dict[key]
-            elif key == 'theme':
-                theme.append(requests_as_dict[key])
-                del requests_as_dict[key]
-        if requests_as_dict:
-            for entry in Quotation.query.filter_by(**requests_as_dict):
-                every_quotation.append(entry.to_dict())
-        else:
-            for entry in Quotation.query.all():
-                every_quotation.append(entry.to_dict())
-        if len(theme) != 0:
-            for entry in every_quotation:
-                if entry['theme_1'] == theme[0] or entry['theme_2'] == theme[0] or entry['theme_3'] == theme[0]:
-                    quotations_to_return.append(entry)
+        if 'id' in request_dict_keys:
+            id_list = request.args.getlist('id')
+            for given_id in id_list:
+                quotations_to_return.append(Quotation.query.filter_by(id=given_id).first().to_dict())
             return jsonify({'quotations': quotations_to_return})
+
         else:
-            return jsonify({'quotations': every_quotation})
+
+            for key in request_dict_keys:
+                if requests_as_dict[key] == 'All':
+                    del requests_as_dict[key]
+                elif key == 'theme':
+                    theme.append(requests_as_dict[key])
+                    del requests_as_dict[key]
+            if requests_as_dict:
+                for entry in Quotation.query.filter_by(**requests_as_dict):
+                    every_quotation.append(entry.to_dict())
+            else:
+                for entry in Quotation.query.all():
+                    every_quotation.append(entry.to_dict())
+            if len(theme) != 0:
+                for entry in every_quotation:
+                    if entry['theme_1'] == theme[0] or entry['theme_2'] == theme[0] or entry['theme_3'] == theme[0]:
+                        quotations_to_return.append(entry)
+                return jsonify({'quotations': quotations_to_return})
+            else:
+                return jsonify({'quotations': every_quotation})
 
 
 if __name__ == "__main__":
