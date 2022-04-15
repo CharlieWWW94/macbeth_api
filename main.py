@@ -80,6 +80,12 @@ def search():
     for entry in request.args:
         request_arguments.append(entry)
 
+    if 'id' in request_arguments:
+        for i in request.args['id']:
+            saved_quotation = Quotation.query.filter_by(id=int(i)).first()
+            quotations_to_return.append(saved_quotation.to_dict())
+        return jsonify({'quotations': [entry for entry in quotations_to_return]})
+
     if 'act' in request_arguments:
         if request.args['act'] == 'All':
             request_arguments.remove('act')
