@@ -81,8 +81,8 @@ def search():
         request_arguments.append(entry)
 
     if 'id' in request_arguments:
-        for i in request.args['id']:
-            saved_quotation = Quotation.query.filter_by(id=int(i)).first()
+        for i in request.args.items(multi=True):
+            saved_quotation = Quotation.query.filter_by(id=i[1]).first()
             quotations_to_return.append(saved_quotation.to_dict())
         return jsonify({'quotations': [entry for entry in quotations_to_return]})
 
